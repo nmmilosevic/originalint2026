@@ -506,7 +506,7 @@ function HomePage() {
 
       <section className="creativity-callout">
         <RevealImage image={photoImages(CREATIVITY)[1]} ratio="cinema" sizes="100vw" />
-        <div className="creativity-copy">
+        <div className="creativity-copy page-grid">
           <SectionLabel light>Made by hand</SectionLabel>
           <Reveal><h2>Creativity lives in the detail.</h2></Reveal>
           <p>From the first sketch to the final stitch, our studio shapes every layer of an interior.</p>
@@ -951,7 +951,7 @@ function NotFound() {
 function InquiryBanner() {
   return (
     <section className="inquiry-banner">
-      <div className="inquiry-grid section-shell">
+      <div className="inquiry-grid page-grid">
         <div className="inquiry-copy">
           <span>Have a project in mind?</span>
           <Reveal><h2>Let’s make it unmistakably yours.</h2></Reveal>
