@@ -11,7 +11,7 @@ test("desktop homepage and navigation are fully interactive", async ({ page }) =
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Spaces,/ })).toBeVisible();
   await expect(page.locator(".featured-project")).toHaveCount(3);
-  await expect.poll(async () => page.locator(".featured-project img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
+  await expect.poll(async () => page.locator(".hero-media img").evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
   await page.getByRole("button", { name: "Menu" }).click();
   await expect(page.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
   await page.getByRole("link", { name: /Projects/ }).first().click();
@@ -54,6 +54,26 @@ test("mobile layout has no horizontal overflow and menu remains usable", async (
   await expect(page.getByRole("link", { name: /Contact/ }).first()).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page.getByRole("button", { name: "Menu" })).toBeVisible();
+});
+
+test("images use responsive WebP sources and only the LCP image is prioritized", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const hero = page.locator(".hero-media img");
+  await expect(hero).toHaveAttribute("src", /\/media\/optimized\/.+\.webp$/);
+  await expect(hero).toHaveAttribute("srcset", /480w/);
+  await expect(hero).toHaveAttribute("fetchpriority", "high");
+  await expect(page.locator('img[fetchpriority="high"]')).toHaveCount(1);
+
+  const firstProjectImage = page.locator(".featured-project img").first();
+  await expect(firstProjectImage).toHaveAttribute("loading", "lazy");
+  await expect(firstProjectImage).toHaveAttribute("fetchpriority", "low");
+});
+
+test("reduced motion removes image transforms", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".intro-image img")).toHaveCSS("transform", "none");
 });
 
 test("every archived route resolves to a designed page", async ({ page }) => {

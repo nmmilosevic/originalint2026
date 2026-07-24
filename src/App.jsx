@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Lenis from "lenis";
 import {
   AnimatePresence,
   LazyMotion,
@@ -17,6 +16,7 @@ import {
   meaningfulBlocks,
   normalizePath,
   pageByPath,
+  pages,
   photoImages,
   projectCategory,
   projects,
@@ -27,26 +27,25 @@ import {
 const EASE_EXPO = [0.16, 1, 0.3, 1];
 const EASE_QUART = [0.25, 1, 0.5, 1];
 const EASE_SMOOTH = [0.76, 0, 0.24, 1];
-let smoothScrollInstance = null;
 const PAGE_VARIANTS = {
-  initial: { opacity: 0, y: 16 },
-  enter: { opacity: 1, y: 0, transition: { duration: 0.62, ease: EASE_EXPO } },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.3, ease: EASE_QUART } },
+  initial: { opacity: 0, y: 10 },
+  enter: { opacity: 1, y: 0, transition: { duration: 0.46, ease: EASE_EXPO } },
+  exit: { opacity: 0, transition: { duration: 0.18, ease: EASE_QUART } },
 };
 const REVEAL_VARIANTS = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 20 },
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.72, delay, ease: EASE_EXPO },
+    transition: { duration: 0.54, delay, ease: EASE_EXPO },
   }),
 };
 const TITLE_VARIANTS = {
-  hidden: { opacity: 0, y: 34 },
+  hidden: { opacity: 0, y: 24 },
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.82, delay, ease: EASE_EXPO },
+    transition: { duration: 0.62, delay, ease: EASE_EXPO },
   }),
 };
 const MENU_VARIANTS = {
@@ -176,28 +175,55 @@ const MENU_PREVIEW_BY_PATH = {
   "/blog/": photoImages(articles[0])[0] ?? MENU_DEFAULT_IMAGE,
   "/contact/": photoImages(CREATIVITY)[1] ?? photoImages(CONTACT)[1] ?? MENU_DEFAULT_IMAGE,
 };
+const IMAGE_BY_LOCAL_PATH = new Map(
+  pages.flatMap((page) => page.images ?? []).map((image) => [image.local, image]),
+);
+const RESPONSIVE_IMAGE_WIDTHS = [480, 900, 1440, 1920];
 
-function SmoothScroll() {
-  const reduceMotion = useReducedMotion();
+function optimizedImageData(source) {
+  const metadata = IMAGE_BY_LOCAL_PATH.get(source);
+  if (!metadata?.width || !metadata?.height) return { src: source };
 
-  useEffect(() => {
-    if (reduceMotion) return undefined;
-    const lenis = new Lenis({ duration: 1.05, smoothWheel: true, wheelMultiplier: 0.9 });
-    smoothScrollInstance = lenis;
-    let frame;
-    const raf = (time) => {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    };
-    frame = requestAnimationFrame(raf);
-    return () => {
-      cancelAnimationFrame(frame);
-      lenis.destroy();
-      if (smoothScrollInstance === lenis) smoothScrollInstance = null;
-    };
-  }, [reduceMotion]);
+  const sourceWidth = metadata.width;
+  const displayWidth = Math.min(sourceWidth, RESPONSIVE_IMAGE_WIDTHS.at(-1));
+  const displayHeight = Math.round(metadata.height * (displayWidth / sourceWidth));
+  const candidates = RESPONSIVE_IMAGE_WIDTHS.filter((width) => width < sourceWidth);
+  candidates.push(displayWidth);
+  const uniqueCandidates = [...new Set(candidates)];
+  const filename = source.split("/").at(-1);
+  const stem = filename.replace(/\.[^.]+$/, "");
+  const candidatePath = (candidateWidth) => `/media/optimized/${stem}-${candidateWidth}.webp`;
 
-  return null;
+  return {
+    src: candidatePath(uniqueCandidates.at(-1)),
+    srcSet: uniqueCandidates.map((candidateWidth) => `${candidatePath(candidateWidth)} ${candidateWidth}w`).join(", "),
+    width: displayWidth,
+    height: displayHeight,
+  };
+}
+
+function OptimizedImage({
+  image,
+  alt,
+  eager = false,
+  sizes = "(max-width: 820px) 100vw, 70vw",
+  ...props
+}) {
+  const source = typeof image === "string" ? image : image?.local ?? image?.remote;
+  if (!source) return null;
+  const optimized = optimizedImageData(source);
+
+  return (
+    <img
+      {...props}
+      {...optimized}
+      alt={alt ?? (typeof image === "string" ? "" : image?.alt || "Originals Interiors project")}
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "low"}
+      decoding="async"
+      sizes={optimized.srcSet ? sizes : undefined}
+    />
+  );
 }
 
 function ScrollProgress() {
@@ -256,11 +282,6 @@ function Navigation() {
   useEffect(() => {
     if (!open) return;
     setActiveMenuPath("/portfolio/");
-    Object.values(MENU_PREVIEW_BY_PATH).forEach((image) => {
-      if (!image?.local) return;
-      const preload = new Image();
-      preload.src = image.local;
-    });
   }, [open]);
 
   const toggle = useCallback(() => {
@@ -301,16 +322,16 @@ function Navigation() {
           >
             <div className="menu-image" aria-hidden="true">
               <AnimatePresence initial={false}>
-                <m.img
+                <m.div
+                  className="menu-image-frame"
                   key={activeMenuImage?.local}
-                  src={activeMenuImage?.local}
-                  alt=""
-                  decoding="async"
                   initial={{ opacity: 0, scale: 1.02 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.995 }}
-                  transition={{ duration: 0.42, ease: EASE_EXPO }}
-                />
+                  transition={{ duration: 0.32, ease: EASE_EXPO }}
+                >
+                  <OptimizedImage image={activeMenuImage} alt="" sizes="(max-width: 980px) 1px, 42vw" />
+                </m.div>
               </AnimatePresence>
             </div>
             <nav className="menu-links" aria-label="Primary navigation">
@@ -385,22 +406,15 @@ function RevealImage({ image, className = "", ratio = "landscape", eager = false
   return (
     <m.figure
       className={`image-shell ${ratio} ${className}`}
-      initial={reduceMotion ? false : { opacity: 0.35, y: 28 }}
+      initial={reduceMotion ? false : { opacity: 0.35, y: 20 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.08 }}
-      transition={{ duration: 0.72, ease: EASE_EXPO }}
+      transition={{ duration: 0.54, ease: EASE_EXPO }}
     >
-      <m.img
-        src={image.local ?? image.remote}
-        alt={image.alt || "Originals Interiors project"}
-        loading={eager ? "eager" : "lazy"}
-        fetchPriority={eager ? "high" : "auto"}
+      <OptimizedImage
+        image={image}
+        eager={eager}
         sizes={sizes}
-        initial={reduceMotion ? false : { scale: 1.035 }}
-        whileInView={reduceMotion ? undefined : { scale: 1 }}
-        whileHover={reduceMotion ? undefined : { scale: 1.018 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.92, ease: EASE_EXPO }}
       />
     </m.figure>
   );
@@ -442,7 +456,7 @@ function HomePage() {
   return (
     <>
       <section className="home-hero">
-        <div className="hero-media"><img src={hero.local} alt={hero.alt} fetchPriority="high" /></div>
+        <div className="hero-media"><OptimizedImage image={hero} eager sizes="100vw" /></div>
         <div className="hero-wash" />
         <div className="hero-kicker">Interior architecture · Marbella / Worldwide</div>
         <RevealTitle className="home-title" delay={0.06}>
@@ -458,7 +472,7 @@ function HomePage() {
           <p>{intro}</p>
           <TextLink to="/about/">Meet Originals</TextLink>
         </Reveal>
-        <RevealImage image={images[2]} className="intro-image" ratio="portrait" eager />
+        <RevealImage image={images[2]} className="intro-image" ratio="portrait" />
       </section>
 
       <section className="featured-projects">
@@ -472,7 +486,7 @@ function HomePage() {
             return (
               <article className={`featured-project feature-${index + 1}`} key={project.path}>
                 <Link to={project.path} aria-label={`View ${project.title}`}>
-                  <RevealImage image={image} ratio={index === 1 ? "portrait" : "landscape"} eager />
+                  <RevealImage image={image} ratio={index === 1 ? "portrait" : "landscape"} />
                   <div className="project-caption">
                     <div><span>{projectCategory(project)}</span></div>
                     <h3>{project.title}</h3>
@@ -491,7 +505,7 @@ function HomePage() {
       <Suppliers />
 
       <section className="creativity-callout">
-        <RevealImage image={photoImages(CREATIVITY)[1]} ratio="cinema" eager sizes="100vw" />
+        <RevealImage image={photoImages(CREATIVITY)[1]} ratio="cinema" sizes="100vw" />
         <div className="creativity-copy">
           <SectionLabel light>Made by hand</SectionLabel>
           <Reveal><h2>Creativity lives in the detail.</h2></Reveal>
@@ -549,7 +563,7 @@ function HomePage() {
         <div className="journal-items">
           {latestArticles.map((article) => (
             <Link to={article.path} key={article.path} className="journal-item">
-              <RevealImage image={photoImages(article)[0]} ratio="landscape" eager />
+              <RevealImage image={photoImages(article)[0]} ratio="landscape" />
               <div><span>{dateFromPath(article.path)}</span><h3>{article.title}</h3><ArrowIcon /></div>
             </Link>
           ))}
@@ -566,13 +580,6 @@ function ServicesRail({ variant = "home" }) {
   const activeImage = SERVICE_PREVIEWS[active];
   const isPage = variant === "page";
 
-  useEffect(() => {
-    SERVICE_PREVIEWS.forEach((image) => {
-      if (!image?.local) return;
-      const preload = new Image();
-      preload.src = image.local;
-    });
-  }, []);
   return (
     <section className={`section-shell services-rail ${isPage ? "is-page" : ""}`}>
       <SectionLabel>{isPage ? "Explore our services" : "What we do"}</SectionLabel>
@@ -598,16 +605,16 @@ function ServicesRail({ variant = "home" }) {
         </div>
         <div className="service-preview" aria-hidden="true">
           <AnimatePresence initial={false}>
-            <m.img
+            <m.div
+              className="service-preview-frame"
               key={activeImage?.local}
-              src={activeImage?.local}
-              alt=""
-              decoding="async"
               initial={{ opacity: 0, scale: 1.014 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.992 }}
-              transition={{ duration: 0.46, ease: EASE_EXPO }}
-            />
+              transition={{ duration: 0.32, ease: EASE_EXPO }}
+            >
+              <OptimizedImage image={activeImage} alt="" sizes="(max-width: 980px) 1px, 36vw" />
+            </m.div>
           </AnimatePresence>
         </div>
       </div>
@@ -625,16 +632,16 @@ function Suppliers() {
           <p>Textiles, lighting, furniture, and finishes sourced through trusted design houses from across Europe.</p>
         </Reveal>
         <div className="supplier-grid" aria-label="Originals Interiors suppliers">
-          {SUPPLIERS.map(([name, src], index) => (
-            <Reveal className="supplier-mark" delay={(index % 7) * 0.025} key={name}>
-              <img src={src} alt={`${name} supplier logo`} loading="lazy" decoding="async" />
-            </Reveal>
+          {SUPPLIERS.map(([name, src]) => (
+            <div className="supplier-mark" key={name}>
+              <OptimizedImage image={src} alt={`${name} supplier logo`} sizes="(max-width: 560px) 28vw, (max-width: 980px) 20vw, 12vw" />
+            </div>
           ))}
         </div>
         <div className="preferred-partner">
           <Reveal className="preferred-mark">
             <span>Preferred partner · Marbella</span>
-            <img src="/media/originals/14--Eichholtz-5e36f5d2c.png" alt="Eichholtz" loading="lazy" decoding="async" />
+            <OptimizedImage image="/media/originals/14--Eichholtz-5e36f5d2c.png" alt="Eichholtz" sizes="13rem" />
           </Reveal>
           <Reveal className="preferred-copy" delay={0.08}>
             <h3>Exclusive access to Eichholtz.</h3>
@@ -671,7 +678,7 @@ function PortfolioPage({ page }) {
                 transition={{ duration: 0.55, ease: EASE_EXPO }}
               >
                 <Link to={project.path}>
-                  <RevealImage image={photoImages(project)[0]} ratio={index % 3 === 0 ? "portrait" : "landscape"} eager={index < 4} />
+                  <RevealImage image={photoImages(project)[0]} ratio={index % 3 === 0 ? "portrait" : "landscape"} />
                   <div className="tile-copy"><span>{projectCategory(project)}</span><h2>{project.title}</h2><ArrowIcon /></div>
                 </Link>
               </m.article>
@@ -728,8 +735,8 @@ function ServicesPage() {
         <Reveal className="services-page-intro" delay={0.18}>
           <p>Originals brings designers, architects, makers, suppliers, and installers into one considered process. From a single room to a complete residence or hospitality project, every decision is connected.</p>
         </Reveal>
-        <RevealImage image={SERVICE_PREVIEWS[5]} ratio="landscape" className="services-page-primary" eager sizes="(max-width: 820px) 100vw, 70vw" />
-        <RevealImage image={SERVICE_PREVIEWS[0]} ratio="portrait" className="services-page-detail" eager sizes="(max-width: 820px) 100vw, 32vw" />
+        <RevealImage image={SERVICE_PREVIEWS[5]} ratio="landscape" className="services-page-primary" sizes="(max-width: 820px) 100vw, 70vw" />
+        <RevealImage image={SERVICE_PREVIEWS[0]} ratio="portrait" className="services-page-detail" sizes="(max-width: 820px) 100vw, 32vw" />
       </section>
       <ServicesRail variant="page" />
       <InquiryBanner />
@@ -999,7 +1006,6 @@ function Footer() {
 
 function RouteScrollReset() {
   useLayoutEffect(() => {
-    smoothScrollInstance?.scrollTo(0, { immediate: true, force: true });
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
   return null;
@@ -1048,7 +1054,6 @@ function RoutedPage() {
 export default function App() {
   return (
     <LazyMotion features={domAnimation} strict>
-      <SmoothScroll />
       <ScrollProgress />
       <Navigation />
       <RoutedPage />

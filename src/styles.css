@@ -37,8 +37,6 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 ::selection { color: var(--chalk); background: var(--rust); }
 :focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 
-.lenis.lenis-smooth { scroll-behavior: auto; }
-.lenis.lenis-stopped { overflow: hidden; }
 .scroll-progress { position: fixed; z-index: 130; top: 0; left: 0; right: 0; height: 2px; background: var(--rust); transform-origin: left; }
 
 .section-shell { width: min(100%, calc(var(--content) + var(--gutter) * 2)); margin-inline: auto; padding-inline: var(--gutter); }
@@ -62,6 +60,7 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .site-header.is-open .menu-glyph i:last-child { transform: translateY(-3px) rotate(-45deg); }
 .menu-panel { position: fixed; z-index: 110; inset: 0; display: grid; grid-template-columns: minmax(18rem, .72fr) 1fr; gap: clamp(2rem, 6vw, 8rem); padding: clamp(6rem, 11vh, 9rem) var(--gutter) 2rem; background: var(--limestone); color: var(--ink); backface-visibility: hidden; }
 .menu-image { position: relative; min-height: 0; height: 100%; overflow: hidden; }
+.menu-image-frame { position: absolute; inset: 0; overflow: hidden; }
 .menu-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .menu-links { align-self: center; }
 .menu-link-row { position: relative; overflow: hidden; border-bottom: 1px solid color-mix(in oklch, var(--ink) 18%, transparent); }
@@ -97,8 +96,8 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .text-link:hover svg { transform: translateX(.35rem); }
 .text-link.light { color: var(--chalk); }
 
-.image-shell { position: relative; overflow: hidden; background: var(--bone); border-radius: 2px; transition: box-shadow .42s var(--ease-expo), transform .42s var(--ease-expo); }
-.image-shell img { width: 100%; height: 100%; object-fit: cover; }
+.image-shell { position: relative; overflow: hidden; background: var(--bone); border-radius: 2px; transition: box-shadow .3s var(--ease-expo); }
+.image-shell img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.006); transition: transform .55s var(--ease-expo); }
 .image-shell.landscape { aspect-ratio: 1.45 / 1; }
 .image-shell.portrait { aspect-ratio: .72 / 1; }
 .image-shell.cinema { aspect-ratio: 16 / 8.4; }
@@ -134,6 +133,7 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .service-row svg { width: 1.55rem; }
 .service-row-mobile-image { display: none; }
 .service-preview { position: sticky; top: 6rem; aspect-ratio: .76 / 1; overflow: hidden; }
+.service-preview-frame { position: absolute; inset: 0; overflow: hidden; }
 .service-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 .suppliers { background: color-mix(in oklch, var(--bone) 42%, var(--limestone)); border-block: 1px solid color-mix(in oklch, var(--ink) 9%, transparent); }
@@ -144,8 +144,7 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .supplier-intro h2 { font-family: var(--display); font-size: clamp(2.35rem, 4.2vw, 4.4rem); font-weight: 470; line-height: .98; letter-spacing: -.047em; }
 .supplier-intro p { max-width: 34rem; color: var(--graphite); line-height: 1.7; }
 .supplier-grid { grid-column: 1 / 13; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: clamp(3rem, 6vw, 6rem); border-top: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); border-left: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); }
-.supplier-mark { min-height: clamp(6.5rem, 9vw, 9rem); border-right: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); }
-.supplier-mark .reveal-content { width: 100%; height: 100%; display: grid; place-items: center; padding: clamp(1.1rem, 2vw, 2rem); }
+.supplier-mark { min-height: clamp(6.5rem, 9vw, 9rem); display: grid; place-items: center; padding: clamp(1.1rem, 2vw, 2rem); border-right: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); border-bottom: 1px solid color-mix(in oklch, var(--ink) 10%, transparent); }
 .supplier-mark img { width: 100%; max-width: 9rem; max-height: 4.25rem; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.65) brightness(1.12); opacity: .68; transition: opacity .35s var(--ease-quart), transform .45s var(--ease-expo); }
 .supplier-mark:hover img { opacity: .92; transform: translateY(-2px); }
 .preferred-partner { grid-column: 1 / 13; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2rem; align-items: end; margin-top: clamp(5rem, 10vw, 10rem); padding-top: clamp(3rem, 6vw, 6rem); border-top: 1px solid color-mix(in oklch, var(--ink) 16%, transparent); }
@@ -400,6 +399,27 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .footer-signature > span:last-child { color: color-mix(in oklch, var(--chalk) 44%, transparent); font-size: .52rem; letter-spacing: .12em; }
 .footer-legal { justify-self: end; display: flex; gap: 1.75rem; }
 
+.featured-projects,
+.services-rail,
+.suppliers,
+.creativity-callout,
+.worldwide,
+.testimonials,
+.journal-preview,
+.inquiry-banner,
+.project-gallery,
+.service-gallery,
+.article-gallery,
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a:hover .image-shell img,
+  .image-shell:hover img { transform: scale(1.018); }
+}
+
 @media (max-width: 980px) {
   .menu-panel { grid-template-columns: 1fr; }
   .menu-image { display: none; }
@@ -499,8 +519,7 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
   .testimonials blockquote { font-size: clamp(1.25rem, 5.5vw, 1.5rem); line-height: 1.32; letter-spacing: -.018em; }
   .testimonial-copy { gap: 1.5rem; }
   .quote-controls { margin-top: 1rem; }
-  .supplier-mark { min-height: 6.25rem; }
-  .supplier-mark .reveal-content { padding: 1rem .75rem; }
+  .supplier-mark { min-height: 6.25rem; padding: 1rem .75rem; }
   .supplier-mark img { max-height: 3.5rem; }
   .contact-form { grid-template-columns: 1fr; }
   .contact-form label.full, .contact-form button { grid-column: 1; }
@@ -534,4 +553,5 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .image-shell img { transform: none !important; }
 }
