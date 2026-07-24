@@ -203,7 +203,8 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 .journal-item h3 { max-width: 85%; margin-top: .75rem; font-size: clamp(1.35rem, 2.3vw, 2.25rem); font-weight: 500; line-height: 1.12; letter-spacing: -.035em; }
 .journal-item svg { position: absolute; right: 0; bottom: .25rem; width: 1.6rem; }
 
-.inquiry-banner { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(2rem, 5vw, 6rem); align-items: center; min-height: min(82svh, 58rem); padding: clamp(4rem, 8vw, 8rem) var(--gutter); background: var(--clay); color: var(--ink); overflow: hidden; }
+.inquiry-banner { min-height: min(82svh, 58rem); padding-block: clamp(4rem, 8vw, 8rem); background: var(--clay); color: var(--ink); overflow: hidden; }
+.inquiry-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(2rem, 5vw, 6rem); align-items: center; }
 .inquiry-copy { grid-column: 1 / 8; display: grid; align-content: center; justify-items: start; }
 .inquiry-copy > span { margin-bottom: clamp(2rem, 4vw, 4rem); font-size: .67rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .inquiry-copy h2 { max-width: 14ch; font-family: var(--display); font-size: clamp(2.4rem, 4.2vw, 4.35rem); font-weight: 470; line-height: .98; letter-spacing: -.048em; }
@@ -439,7 +440,7 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
 @media (max-width: 820px) {
   :root { --gutter: 1rem; --section: 5rem; }
   .site-header { grid-template-columns: 1fr 1fr; }
-  .section-shell, .page-grid, .featured-list, .creativity-copy, .project-gallery, .service-gallery, .article-gallery, .inquiry-banner, .site-footer { padding-left: var(--gutter); padding-right: var(--gutter); }
+  .section-shell, .page-grid, .featured-list, .creativity-copy, .project-gallery, .service-gallery, .article-gallery, .site-footer { padding-left: var(--gutter); padding-right: var(--gutter); }
   .section-label { grid-column: 1 / -1 !important; }
   .home-hero { padding-bottom: 2rem; }
   .hero-kicker { top: 21%; }
@@ -461,7 +462,8 @@ h1, h2, h3, p, figure, blockquote { margin: 0; }
   .quote-mark, .testimonial-copy, .quote-controls { grid-column: 1; }
   .journal-items { grid-template-columns: 1fr; }
   .journal-item:nth-child(2) { margin-top: 2rem; width: 100%; margin-left: 0; }
-  .inquiry-banner { grid-template-columns: 1fr; align-items: start; min-height: auto; }
+  .inquiry-banner { min-height: auto; }
+  .inquiry-grid { grid-template-columns: 1fr; align-items: start; }
   .inquiry-copy, .inquiry-image { grid-column: 1; }
   .inquiry-image { justify-self: end; width: 76%; margin-top: 2rem; }
   .page-intro .page-grid { display: block; }

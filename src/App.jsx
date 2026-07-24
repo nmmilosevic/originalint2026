@@ -951,13 +951,15 @@ function NotFound() {
 function InquiryBanner() {
   return (
     <section className="inquiry-banner">
-      <div className="inquiry-copy">
-        <span>Have a project in mind?</span>
-        <Reveal><h2>Let’s make it unmistakably yours.</h2></Reveal>
-        <p>Tell us where you are, how you want to live, and what the space should make possible.</p>
-        <TextLink to="/contact/">Start a conversation</TextLink>
+      <div className="inquiry-grid section-shell">
+        <div className="inquiry-copy">
+          <span>Have a project in mind?</span>
+          <Reveal><h2>Let’s make it unmistakably yours.</h2></Reveal>
+          <p>Tell us where you are, how you want to live, and what the space should make possible.</p>
+          <TextLink to="/contact/">Start a conversation</TextLink>
+        </div>
+        <RevealImage image={INQUIRY_IMAGE} className="inquiry-image" ratio="portrait" sizes="(max-width: 820px) 100vw, 42vw" />
       </div>
-      <RevealImage image={INQUIRY_IMAGE} className="inquiry-image" ratio="portrait" sizes="(max-width: 820px) 100vw, 42vw" />
     </section>
   );
 }
