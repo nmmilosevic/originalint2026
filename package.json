@@ -10,6 +10,7 @@
     "dev": "vite",
     "prebuild": "npm run images:optimize",
     "build": "vite build",
+    "deploy:package": "node scripts/package-deployment.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
